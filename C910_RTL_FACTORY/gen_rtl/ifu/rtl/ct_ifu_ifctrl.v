@@ -130,27 +130,49 @@ module ct_ifu_ifctrl(
 );
 
 // &Ports; @23
-input            bht_ifctrl_inv_done;               
-input            bht_ifctrl_inv_on;                 
-input            btb_ifctrl_inv_done;               
-input            btb_ifctrl_inv_on;                 
-input            cp0_ifu_bht_inv;                   
-input            cp0_ifu_btb_inv;                   
-input            cp0_ifu_icache_inv;                
+// Indicates whether the Branch History Table (BHT) invalidation process is done. When asserted, it means the BHT invalidation has completed.
+input            bht_ifctrl_inv_done;
+// Indicates whether the BHT invalidation process is currently active. When asserted, it means the BHT is undergoing invalidation.
+input            bht_ifctrl_inv_on;
+// Indicates whether the Branch Target Buffer (BTB) invalidation process is done. When asserted, it means the BTB invalidation has completed.
+input            btb_ifctrl_inv_done;
+// Indicates whether the BTB invalidation process is currently active. When asserted, it means the BTB is undergoing invalidation.
+input            btb_ifctrl_inv_on;
+// Indicates a request to invalidate the BHT from the CP0 unit.
+input            cp0_ifu_bht_inv;
+// Indicates a request to invalidate the BTB from the CP0 unit.
+input            cp0_ifu_btb_inv;
+// Indicates a request to invalidate the instruction cache from the CP0 unit.
+input            cp0_ifu_icache_inv;
+// Specifies the index or address for reading from the instruction cache. It is a 17-bit wide signal.
 input   [16 :0]  cp0_ifu_icache_read_index;         
-input            cp0_ifu_icache_read_req;           
-input            cp0_ifu_icache_read_tag;           
-input            cp0_ifu_icache_read_way;           
-input            cp0_ifu_icg_en;                    
-input            cp0_ifu_ind_btb_inv;               
-input            cp0_ifu_no_op_req;                 
-input            cp0_yy_clk_en;                     
-input            cpurst_b;                          
-input            forever_cpuclk;                    
-input            hpcp_ifu_cnt_en;                   
-input   [127:0]  icache_if_ifctrl_inst_data0;       
-input   [127:0]  icache_if_ifctrl_inst_data1;       
+// Indicates a request to read from the instruction cache from the CP0 unit.
+input            cp0_ifu_icache_read_req;
+// Indicates a request to read the tag from the instruction cache from the CP0 unit.
+input            cp0_ifu_icache_read_tag;
+// Indicates a request to read a specific way from the instruction cache from the CP0 unit.
+input            cp0_ifu_icache_read_way;
+// Enables the instruction cache gate clock from the CP0 unit to save power.
+input            cp0_ifu_icg_en;
+// Indicates a request to invalidate the indirect BTB from the CP0 unit.
+input            cp0_ifu_ind_btb_inv;
+// Indicates a request for no operation from the CP0 unit.
+input            cp0_ifu_no_op_req;
+// Global clock enable signal from the CP0 unit, used to globally enable or disable the clock for power management.
+input            cp0_yy_clk_en;
+// Reset signal for the entire module, active low.
+input            cpurst_b;
+// The main clock signal for the CPU, drives the clock for the entire module.
+input            forever_cpuclk;
+// Enables the counting of certain events in the IFU for performance monitoring purposes.
+input            hpcp_ifu_cnt_en;
+// Provides the instruction data read from the instruction cache for the first set of data.
+input   [127:0]  icache_if_ifctrl_inst_data0;
+// Provides the instruction data read from the instruction cache for the second set of data.
+input   [127:0]  icache_if_ifctrl_inst_data1;
+// Provides the tag data read from the instruction cache for the first set of data.
 input   [28 :0]  icache_if_ifctrl_tag_data0;        
+// Provides the tag data read from the instruction cache for the second set of data.
 input   [28 :0]  icache_if_ifctrl_tag_data1;        
 input            ind_btb_ifctrl_inv_done;           
 input            ind_btb_ifctrl_inv_on;             

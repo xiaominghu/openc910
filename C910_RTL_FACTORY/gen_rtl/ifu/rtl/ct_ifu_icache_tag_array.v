@@ -74,6 +74,7 @@ assign tag_local_en = ifu_icache_tag_clk_en;
 
 //Instance Logic
 //Support Bit Write
+// active low, any bit is zero will enable the write
 assign ifu_icache_tag_gwen       = &ifu_icache_tag_wen[2:0];
 assign ifu_icache_tag_bwen[58:0] = {
                                      ifu_icache_tag_wen[2], 

@@ -80,56 +80,109 @@ input            cp0_yy_clk_en;
 input            cpurst_b;                           
 input            forever_cpuclk;                     
 input            hpcp_ifu_cnt_en;                    
+// This signal represents the index or address used to access the instruction cache from the instruction fetch control (IFCTRL). 
+// It is a 39-bit wide signal, indicating it can address a significant range of memory locations within the cache.
 input   [38 :0]  ifctrl_icache_if_index;             
+// This signal indicates whether the invalidation FIFO (First-In-First-Out) buffer is active. It is used to manage cache invalidation requests in an orderly manner.
 input            ifctrl_icache_if_inv_fifo;          
+// This signal indicates whether the instruction cache invalidation process is currently active. When asserted, it means that the cache is undergoing invalidation.
 input            ifctrl_icache_if_inv_on;            
+// This signal is used to request a read operation for data from the instruction cache. It could be part of a mechanism to fetch data from the cache.
 input            ifctrl_icache_if_read_req_data0;    
+// Similar to `ifctrl_icache_if_read_req_data0`, this signal is used to request a read operation for another set of data from the instruction cache. It could be used for parallel data fetching or for handling multiple read requests.
 input            ifctrl_icache_if_read_req_data1;    
+// This signal represents the index or address for a read request to the instruction cache. It is a 39-bit wide signal, indicating it can address a large range of memory locations within the cache.
 input   [38 :0]  ifctrl_icache_if_read_req_index;    
+// This signal is used to request a read operation for a tag from the instruction cache. Tags are used in caches to identify the actual memory addresses of the cached data.
 input            ifctrl_icache_if_read_req_tag;      
+// This signal indicates a request to reset the instruction cache. When asserted, it might trigger a reset operation to clear the cache contents or reinitialize the cache state.
 input            ifctrl_icache_if_reset_req;         
+// This signal is used to request an operation related to the cache tags, such as reading or writing tags. Tags are essential for cache management and ensuring data consistency.
 input            ifctrl_icache_if_tag_req;           
+// This signal represents the write enable for the cache tags. It is a 3-bit wide signal, which might indicate which parts of the tag should be written or updated.
 input   [2  :0]  ifctrl_icache_if_tag_wen;           
+
 input            ifu_hpcp_icache_miss_pre;           
+
+// This signal represents the index or address used to access the instruction cache from the instruction prefetch buffer (IPB). It is a 34-bit wide signal, indicating it can address a significant range of memory locations within the cache.
 input   [33 :0]  ipb_icache_if_index;                
-input            ipb_icache_if_req;                  
+// This signal indicates a request from the IPB to the instruction cache. When asserted, it means that the IPB is requesting access to the instruction cache.
+input            ipb_icache_if_req;                
+// This signal is used for gate clock control. It indicates that the IPB is requesting access to the instruction cache and is used to enable the clock gating logic to save power.
 input            ipb_icache_if_req_for_gateclk;      
+// This signal indicates whether the L1 cache refill FIFO is active. It is used to manage the data flow during cache refill operations.
 input            l1_refill_icache_if_fifo;           
+// This signal indicates the first cycle of a cache line refill operation. It is used to manage the initial setup for the refill process.
 input            l1_refill_icache_if_first;          
+// This signal represents the index or address for a cache line refill operation. It is a 39-bit wide signal, indicating it can address a large range of memory locations within the cache.
 input   [38 :0]  l1_refill_icache_if_index;          
+// This signal carries the instruction data being refilled into the instruction cache. It is a 128-bit wide signal, indicating that multiple instructions can be transferred in a single cycle.
 input   [127:0]  l1_refill_icache_if_inst_data;      
+// This signal indicates the last cycle of a cache line refill operation. It is used to manage the completion of the refill process.
 input            l1_refill_icache_if_last;           
+// This signal carries pre-decoded information for the instructions being refilled into the cache. It is a 32-bit wide signal, providing additional metadata for the instructions.
 input   [31 :0]  l1_refill_icache_if_pre_code;       
+// This signal represents the physical tag for the cache line being refilled. It is a 28-bit wide signal, used for cache tag comparison and management.
 input   [27 :0]  l1_refill_icache_if_ptag;           
+// This signal indicates a write operation to the instruction cache during a refill. When asserted, it means that the data on `l1_refill_icache_if_inst_data` should be written to the cache.
 input            l1_refill_icache_if_wr;             
+// This signal is used to enable scan mode for integrated clock gating (ICG) cells. It is typically used for testing and debugging purposes.
 input            pad_yy_icg_scan_en;                 
+// This signal indicates a change in the program flow, such as a branch or jump. It is used to manage the instruction cache access during control flow changes.
 input            pcgen_icache_if_chgflw;             
+// This signal indicates a change in the program flow specifically for bank 0 of the instruction cache. It is used to manage cache access for this specific bank.
 input            pcgen_icache_if_chgflw_bank0;       
+// This signal indicates a change in the program flow specifically for bank 1 of the instruction cache. It is used to manage cache access for this specific bank.
 input            pcgen_icache_if_chgflw_bank1;       
+// This signal indicates a change in the program flow specifically for bank 2 of the instruction cache. It is used to manage cache access for this specific bank.
 input            pcgen_icache_if_chgflw_bank2;       
+// This signal indicates a change in the program flow specifically for bank 3 of the instruction cache. It is used to manage cache access for this specific bank.
 input            pcgen_icache_if_chgflw_bank3;       
+// This signal indicates a short change in the program flow, such as a short branch. It is used to manage quick changes in instruction cache access.
 input            pcgen_icache_if_chgflw_short;       
+// This signal is used to enable the gate clock for the instruction cache. It helps in saving power by gating the clock when the cache is not in use.
 input            pcgen_icache_if_gateclk_en;         
+// This signal represents the index or address used to access the instruction cache from the program counter generator (PCGEN). It is a 16-bit wide signal.
 input   [15 :0]  pcgen_icache_if_index;              
+// This signal indicates a sequential data request from the PCGEN to the instruction cache. It is used to manage sequential instruction fetches.
 input            pcgen_icache_if_seq_data_req;       
+// This signal indicates a short sequential data request from the PCGEN to the instruction cache. It is used to manage quick sequential instruction fetches.
 input            pcgen_icache_if_seq_data_req_short; 
+// This signal indicates a sequential tag request from the PCGEN to the instruction cache. It is used to manage sequential tag fetches.
 input            pcgen_icache_if_seq_tag_req;        
+// This signal represents the way prediction information for the instruction cache. It is a 2-bit wide signal, indicating which way (or set) in the cache is predicted to contain the required data.
 input   [1  :0]  pcgen_icache_if_way_pred;           
-output  [127:0]  icache_if_ifctrl_inst_data0;        
-output  [127:0]  icache_if_ifctrl_inst_data1;        
+// This signal carries the instruction data from the instruction cache to the instruction fetch control (IFCTRL) for the first set of data. It is a 128-bit wide signal, indicating that multiple instructions can be transferred in a single cycle.
+output  [127:0]  icache_if_ifctrl_inst_data0;
+// This signal carries the instruction data from the instruction cache to the instruction fetch control (IFCTRL) for the second set of data. It is a 128-bit wide signal, indicating that multiple instructions can be transferred in a single cycle.
+output  [127:0]  icache_if_ifctrl_inst_data1;
+// This signal carries the tag data from the instruction cache to the instruction fetch control (IFCTRL) for the first set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ifctrl_tag_data0;         
+// This signal carries the tag data from the instruction cache to the instruction fetch control (IFCTRL) for the second set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ifctrl_tag_data1;         
-output           icache_if_ifdp_fifo;                
-output  [127:0]  icache_if_ifdp_inst_data0;          
-output  [127:0]  icache_if_ifdp_inst_data1;          
+// This signal indicates whether the FIFO (First-In-First-Out) buffer in the instruction cache interface is active. It is used to manage the data flow during cache operations.
+output           icache_if_ifdp_fifo;
+// This signal carries the instruction data from the instruction cache to the instruction fetch data path (IFDP) for the first set of data. It is a 128-bit wide signal, indicating that multiple instructions can be transferred in a single cycle.
+output  [127:0]  icache_if_ifdp_inst_data0;
+// This signal carries the instruction data from the instruction cache to the instruction fetch data path (IFDP) for the second set of data. It is a 128-bit wide signal, indicating that multiple instructions can be transferred in a single cycle.
+output  [127:0]  icache_if_ifdp_inst_data1;
+// This signal carries pre-decoded information for the instructions from the instruction cache to the instruction fetch data path (IFDP) for the first set of data. It is a 32-bit wide signal, providing additional metadata for the instructions.
 output  [31 :0]  icache_if_ifdp_precode0;            
+// This signal carries pre-decoded information for the instructions from the instruction cache to the instruction fetch data path (IFDP) for the second set of data. It is a 32-bit wide signal, providing additional metadata for the instructions.
 output  [31 :0]  icache_if_ifdp_precode1;            
+// This signal carries the tag data from the instruction cache to the instruction fetch data path (IFDP) for the first set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ifdp_tag_data0;           
+// This signal carries the tag data from the instruction cache to the instruction fetch data path (IFDP) for the second set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ifdp_tag_data1;           
+// This signal carries the tag data from the instruction cache to the instruction prefetch buffer (IPB) for the first set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ipb_tag_data0;            
+// This signal carries the tag data from the instruction cache to the instruction prefetch buffer (IPB) for the second set of data. It is a 29-bit wide signal, used for cache tag comparison and management.
 output  [28 :0]  icache_if_ipb_tag_data1;            
-output           ifu_hpcp_icache_access;             
-output           ifu_hpcp_icache_miss;               
+// This signal indicates an access to the instruction cache for performance monitoring purposes. When asserted, it means that the instruction cache has been accessed.
+output           ifu_hpcp_icache_access;
+// This signal indicates a miss in the instruction cache for performance monitoring purposes. When asserted, it means that the requested data was not found in the instruction cache.
+output           ifu_hpcp_icache_miss;
+
 
 // &Regs; @24
 reg     [15 :0]  icache_index_higher;                
@@ -308,11 +361,11 @@ always @( ifctrl_icache_if_tag_wen[2]
        or l1_refill_icache_if_last)
 begin
 if(ifctrl_icache_if_inv_on)
-  ifu_icache_tag_wen[2] = ifctrl_icache_if_tag_wen[2];
+  ifu_icache_tag_wen[2] = ifctrl_icache_if_tag_wen[2]; // active low
 else if(l1_refill_icache_if_wr && l1_refill_icache_if_last)
-  ifu_icache_tag_wen[2] = 1'b0;
+  ifu_icache_tag_wen[2] = 1'b0; // active low
 else
-  ifu_icache_tag_wen[2] = 1'b1;
+  ifu_icache_tag_wen[2] = 1'b1; // active low
 // &CombEnd; @90
 end
 
@@ -325,12 +378,12 @@ always @( ifctrl_icache_if_inv_on
        or fifo_bit)
 begin
 if(ifctrl_icache_if_inv_on)
-  ifu_icache_tag_wen[1:0] = ifctrl_icache_if_tag_wen[1:0];
+  ifu_icache_tag_wen[1:0] = ifctrl_icache_if_tag_wen[1:0]; // active low
 else if(l1_refill_icache_if_wr &&
          (l1_refill_icache_if_first || l1_refill_icache_if_last))
-  ifu_icache_tag_wen[1:0] = {!fifo_bit, fifo_bit};
+  ifu_icache_tag_wen[1:0] = {!fifo_bit, fifo_bit}; // active low
 else
-  ifu_icache_tag_wen[1:0] = 2'b11;
+  ifu_icache_tag_wen[1:0] = 2'b11; // active low
 // &CombEnd; @104
 end
 
@@ -354,7 +407,7 @@ assign tag_pc_din[27:0] = (ifctrl_icache_if_inv_on || l1_refill_icache_if_first)
 assign ifu_icache_tag_din[58:0] = {tag_fifo_din,
                                    tag_valid_din, tag_pc_din[27:0],
                                    tag_valid_din, tag_pc_din[27:0]
-                                  };
+                                  }; // data will be selected by ifu_icache_tag_wen
 
 //==========================================================
 //            Chip Enable to Icache Data Array
