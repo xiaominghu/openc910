@@ -88,8 +88,8 @@ input            cp0_ifu_icg_en;
 input            cp0_yy_clk_en;                     
 input            cpurst_b;                          
 input            forever_cpuclk;                    
-input            ifctrl_l1_refill_ins_inv;          
-input            ifctrl_l1_refill_ins_inv_dn;       
+input            ifctrl_l1_refill_ins_inv;          // notify refill to invalidate a cacheline, request originally from lsu snoop
+input            ifctrl_l1_refill_ins_inv_dn;       // invalidation done
 input            ifctrl_l1_refill_inv_busy;         
 input            ifctrl_l1_refill_inv_on;           
 input            ifdp_l1_refill_bufferable;         
@@ -97,31 +97,31 @@ input            ifdp_l1_refill_cacheable;
 input            ifdp_l1_refill_fifo;               
 input            ifdp_l1_refill_machine_mode;       
 input            ifdp_l1_refill_secure;             
-input            ifdp_l1_refill_supv_mode;          
-input            ifdp_l1_refill_tsize;              
+input            ifdp_l1_refill_supv_mode;          //supervisor mode
+input            ifdp_l1_refill_tsize;              //Transfer Size, basicly means: icache_en && cacheable
 input            ipb_l1_refill_data_vld;            
 input            ipb_l1_refill_grnt;                
 input   [127:0]  ipb_l1_refill_rdata;               
 input            ipb_l1_refill_trans_err;           
 input            ipctrl_l1_refill_chk_err;          
 input            ipctrl_l1_refill_fifo;             
-input            ipctrl_l1_refill_miss_req;         
-input   [38 :0]  ipctrl_l1_refill_ppc;              
+input            ipctrl_l1_refill_miss_req;         //indicate the refill request is from ip stage
+input   [38 :0]  ipctrl_l1_refill_ppc;              //physical program counter
 input            ipctrl_l1_refill_req_for_gateclk;  
-input   [38 :0]  ipctrl_l1_refill_vpc;              
+input   [38 :0]  ipctrl_l1_refill_vpc;              //virtual program counter
 input            pad_yy_icg_scan_en;                
 input            pcgen_l1_refill_chgflw;            
 output           ifu_hpcp_icache_miss_pre;          
-output  [3  :0]  l1_refill_debug_refill_st;         
+output  [3  :0]  l1_refill_debug_refill_st;         //refill state
 output           l1_refill_icache_if_fifo;          
 output           l1_refill_icache_if_first;         
 output  [38 :0]  l1_refill_icache_if_index;         
-output  [127:0]  l1_refill_icache_if_inst_data;     
+output  [127:0]  l1_refill_icache_if_inst_data;     //the data writen to icache
 output           l1_refill_icache_if_last;          
 output  [31 :0]  l1_refill_icache_if_pre_code;      
 output  [27 :0]  l1_refill_icache_if_ptag;          
 output           l1_refill_icache_if_wr;            
-output           l1_refill_ifctrl_ctc;              
+output           l1_refill_ifctrl_ctc;              //cache-to-cache transfer
 output           l1_refill_ifctrl_idle;             
 output  [38 :0]  l1_refill_ifctrl_pc;               
 output           l1_refill_ifctrl_refill_on;        
@@ -129,8 +129,8 @@ output           l1_refill_ifctrl_reissue;
 output           l1_refill_ifctrl_start;            
 output           l1_refill_ifctrl_start_for_gateclk; 
 output           l1_refill_ifctrl_trans_cmplt;      
-output           l1_refill_ifdp_acc_err;            
-output  [127:0]  l1_refill_ifdp_inst_data;          
+output           l1_refill_ifdp_acc_err;            //access error
+output  [127:0]  l1_refill_ifdp_inst_data;          //to IF Stage data path
 output  [31 :0]  l1_refill_ifdp_precode;            
 output           l1_refill_ifdp_refill_on;          
 output  [28 :0]  l1_refill_ifdp_tag_data;           
@@ -162,7 +162,7 @@ reg     [3  :0]  refill_cur_state;
 reg     [3  :0]  refill_next_state;                 
 reg              secure;                            
 reg              supv_mode;                         
-reg              tsize;                             
+reg              tsize;                             // Transfer Size
 reg     [38 :0]  virtual_pc;                        
 
 // &Wires; @25
@@ -600,9 +600,9 @@ assign l1_refill_icache_if_pre_code[31:0] = pre_code_info[31:0];
 //==========================================================
 //          Refill State Machine on/busy Signal
 //==========================================================
-//refill sm on state means refill sm not accept chgflw signal
+//refill state machine's "on-state" means refill sm not accept chgflw signal
 //and ifctrl should stall PC
-//refill sm busy state means refill sm not allow icache refill request
+//refill sm's "busy-state" means refill sm not allow icache refill request
 assign refill_sm_on   = (refill_cur_state[3:0] == REQ)     || 
                         (refill_cur_state[3:0] == CTC_INV) || 
                          refill_cur_state[2]; //WFDn
@@ -619,8 +619,8 @@ assign l1_refill_ifctrl_trans_cmplt = ipb_refill_data_vld ||
 assign l1_refill_ifctrl_pc[PC_WIDTH-2:0] = virtual_pc[PC_WIDTH-2:0];
 //L1 Refill Reissue will occur next cycle under two condition:
 //(ifctrl will flop L1_Refill_Reissue and send it to pcgen)
-//1.WFD4 state && ipb_refill_data_vld || 
-//  WFD1 state && ipb_refill_data_vld && !tsize
+//1.(WFD4 state && ipb_refill_data_vld) || 
+//  (WFD1 state && ipb_refill_data_vld && !tsize)
 //  which means l1 refill finish normally. 
 //  And when l1 refill WFD4 && data_vld, 
 //  pcgen_pc = refill_next_pc and it <not access icache>
@@ -659,8 +659,8 @@ assign l1_refill_ifctrl_start_for_gateclk  = refill_start_for_gateclk;
 //==========================================================
 //              L1 Refill to IF Data Path
 //==========================================================
-//l1_refill_ifdp_refill_on means inform if stage
-//Inst data from refill state machine not icache
+//l1_refill_ifdp_refill_on informs the IF stage that
+//the Inst data will be from refill state machine, instead of icache
 assign l1_refill_ifdp_refill_on        = refill_sm_on;
 assign l1_refill_ifdp_inst_data[127:0] = ipb_l1_refill_data_aft_v2trans[127:0]; 
 assign l1_refill_ifdp_precode[31:0]    = pre_code_info[31:0];

@@ -4121,7 +4121,7 @@ assign cp0_ifu_btb_inv        = btb_inv;
 assign cp0_ifu_icache_inv     = icache_inv && sel[0] || iui_regs_rst_inv_i;
 assign cp0_ifu_ind_btb_inv    = ibp_inv;
 
-// I-Cache Read
+// I-Cache Read, request from the MCINDEX register
 assign cp0_ifu_icache_read_req         = cins_r && (cindex_rid_icache_tag
                                          || cindex_rid_icache_data
                                          || cindex_rid_icache_tag_ecc

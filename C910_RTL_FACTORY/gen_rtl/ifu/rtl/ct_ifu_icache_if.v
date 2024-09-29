@@ -421,7 +421,7 @@ assign ifu_icache_tag_din[58:0] = {tag_fifo_din,
 //    c.Vector SM Read
 //assign icache_way_pred[1:0] = (l1_refill_icache_if_wr || vector_icache_if_req)
 assign icache_way_pred[1:0] = (l1_refill_icache_if_wr)
-                            ? 2'b11
+                            ? 2'b11 // way selection for cache-write is based on fifo bit
                             : pcgen_icache_if_way_pred[1:0];
 assign icache_reset_inv     = ifctrl_icache_if_reset_req;                            
 assign ifu_icache_data_array0_bank0_cen_b = (
@@ -660,12 +660,15 @@ assign ifu_icache_predecd_array1_din[31:0] = (icache_reset_inv) ? 32'b0 : l1_ref
 //  3.Refill Index
 //  4.Ipb Index
 //    ipb index request will only be valid when
-//      a.rifill state machine in REQ state && biu_refill_grnt
-//      b.biu_refill_grnt doesnot arrive witn change flow at the same time
+//      a.refill state machine in REQ state && biu_refill_grnt
+//      b.biu_refill_grnt does not arrive with change flow at the same time
 //  5.PCgen Index
 
 //Using & | logic to save timing 
-//for four condition will not set at the same time
+//all four conditions will not be set at the same time(one hot encoding)
+//the max width for ifu_icache_index is 16 when the icache size is 256k,
+//and the last bit of PC is already dropped
+//check ICACHE_256K/ICACHE_64K in ct_ifu_icache_data_array0.v for details
 assign ifu_icache_index[15:0] = (icache_req_higher)
                               ? icache_index_higher[15:0]
                               : pcgen_icache_if_index[15:0];
@@ -698,10 +701,10 @@ always @( l1_refill_icache_if_index[15:0]
        or ifctrl_icache_if_index[15:0])
 begin
 case(icache_index_sel[3:0])
-  4'b1000: icache_index_higher[15:0] = ifctrl_icache_if_index[15:0];
+  4'b1000: icache_index_higher[15:0] = ifctrl_icache_if_index[15:0]; // icache invalidation request
   4'b0100: icache_index_higher[15:0] = l1_refill_icache_if_index[15:0];
   4'b0010: icache_index_higher[15:0] = {ipb_icache_if_index[10:0],5'b0};
-  4'b0001: icache_index_higher[15:0] = ifctrl_icache_if_read_req_index[15:0];
+  4'b0001: icache_index_higher[15:0] = ifctrl_icache_if_read_req_index[15:0]; // request from MCINDEX register
   default: icache_index_higher[15:0] = {16{1'bx}};
 endcase 
 // &CombEnd; @437

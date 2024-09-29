@@ -186,6 +186,10 @@ ct_spsram_1024x33  x_ct_spsram_1024x33_bank0 (
   `ifdef MEM_CFG_IN
   .mem_cfg_in                         (mem_cfg_in                        ),
   `endif //MEM_CFG_IN
+  // why using [WIDTH:3] to index ifu_icache_index?
+  // inside ct_had_regs.v we have: assign had_ifu_pc[ADDRW-2:0] = pc_reg[ADDRW-1:1];
+  // so ifu_icache_index[WIDTH:3]==pc_reg[WIDTH+1:4],
+  // for example: if ICACHE_64K, we will use pc[14:4] to index the icache
   .A                                  (ifu_icache_index[WIDTH:3]         ),
   .CEN                                (ifu_icache_data_array0_bank0_cen_b),
   .CLK                                (data_clk_bank0                    ),

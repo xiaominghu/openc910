@@ -1150,6 +1150,7 @@ assign ifctrl_pcgen_ins_icache_inv_done = icache_line_inv_done ||
 //==========================================================
 //            Interface with Icache Interface
 //==========================================================
+// icache invalidation request
 assign ifctrl_icache_if_tag_req              = icache_inv_tag_req;
 assign ifctrl_icache_if_reset_req            = icache_reset_inv_req;
 assign ifctrl_icache_if_inv_on               = (icache_inv_cur_state[3:0] != IDLE);
@@ -1157,6 +1158,7 @@ assign ifctrl_icache_if_tag_wen[2:0]         = icache_inv_tag_wen[2:0];
 assign ifctrl_icache_if_inv_fifo             = icache_inv_fifo;
 assign ifctrl_icache_if_index[PC_WIDTH-2:0]  = icache_inv_index[PC_WIDTH-2:0];
 
+// request from MCINDEX register
 assign ifctrl_icache_if_read_req_tag         = (icache_inv_cur_state[3:0] == READ_REQ) && 
                                                 icache_read_tag;
 assign ifctrl_icache_if_read_req_data0       = (icache_inv_cur_state[3:0] == READ_REQ) && 
@@ -1181,6 +1183,7 @@ assign ifctrl_l1_refill_inv_on       = (icache_inv_cur_state[3:0] != IDLE) ||
                                        );
 // &Force("output","ifctrl_l1_refill_inv_on"); @690
 assign ifctrl_l1_refill_inv_busy     = (icache_inv_cur_state[3:0] != IDLE);
+// notify l1 to invalidate a cacheline, seems the request is from lsu snoop 
 assign ifctrl_l1_refill_ins_inv      = lsu_ifu_icache_line_inv || 
                                        lsu_ifu_icache_all_inv;
 assign ifctrl_l1_refill_ins_inv_dn   = ifu_lsu_icache_inv_done;
@@ -1342,6 +1345,7 @@ assign ifu_cp0_ind_btb_inv_done = ind_btb_inv_dn &&
 //               The invalidation of CP0
 //==========================================================
 // &Force("bus","icache_read_index",16,0); @832
+// request from MCINDEX register
 assign icache_read_tag                 = cp0_ifu_icache_read_tag; //1 for tag, 0 for data
 assign icache_read_way                 = cp0_ifu_icache_read_way;
 assign icache_read_index[16:0]         = cp0_ifu_icache_read_index[16:0];

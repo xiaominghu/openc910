@@ -300,7 +300,7 @@ input   [31 :0]  l1_refill_ifdp_precode;
 input            l1_refill_ifdp_refill_on;      
 input   [28 :0]  l1_refill_ifdp_tag_data;       
 input            mmu_ifu_buf;                   
-input            mmu_ifu_ca;                    
+input            mmu_ifu_ca;                    //cacheable
 input   [27 :0]  mmu_ifu_pa;                    
 input            mmu_ifu_pgflt;                 
 input            mmu_ifu_sec;                   

@@ -40,7 +40,7 @@ input   [15:0]  ifu_icache_index;
 input           ifu_icache_tag_cen_b; 
 input           ifu_icache_tag_clk_en; 
 input   [58:0]  ifu_icache_tag_din;   
-input   [2 :0]  ifu_icache_tag_wen;   
+input   [2 :0]  ifu_icache_tag_wen;   // active low, bit2:fifo bit; bit1: way1; bit0: way0
 input           pad_yy_icg_scan_en; 
 output  [58:0]  icache_ifu_tag_dout;  
 
