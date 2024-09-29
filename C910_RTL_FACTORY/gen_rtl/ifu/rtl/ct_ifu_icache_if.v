@@ -666,7 +666,7 @@ assign ifu_icache_predecd_array1_din[31:0] = (icache_reset_inv) ? 32'b0 : l1_ref
 
 //Using & | logic to save timing 
 //all four conditions will not be set at the same time(one hot encoding)
-//the max width for ifu_icache_index is 16 when the icache size is 256k,
+//the max width for ifu_icache_index is 16 when the icache size is 256k(because icache is two way),
 //and the last bit of PC is already dropped
 //check ICACHE_256K/ICACHE_64K in ct_ifu_icache_data_array0.v for details
 assign ifu_icache_index[15:0] = (icache_req_higher)

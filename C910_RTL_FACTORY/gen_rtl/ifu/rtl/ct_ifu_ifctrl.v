@@ -231,7 +231,11 @@ output           ifctrl_icache_if_reset_req;
 output           ifctrl_icache_if_tag_req;          
 output  [2  :0]  ifctrl_icache_if_tag_wen;          
 output           ifctrl_ifdp_cancel;                
-output           ifctrl_ifdp_pipedown;              
+// The signal ifctrl_ifdp_pipedown is used to indicate whether the instruction fetch data path (IFDP) 
+// should proceed with its operations, effectively allowing data to "pipe down" through the pipeline stages. 
+// This signal is crucial for controlling the flow of data and ensuring that the pipeline operates correctly
+// without stalling or invalid operations.
+output           ifctrl_ifdp_pipedown;              // indicate ifdp shold pass the data to next pipe stage?
 output           ifctrl_ifdp_stall;                 
 output           ifctrl_ind_btb_inv;                
 output           ifctrl_ipb_inv_on;                 
@@ -245,10 +249,14 @@ output           ifctrl_l1_refill_inv_busy;
 output           ifctrl_l1_refill_inv_on;           
 output           ifctrl_lbuf_ins_inv_on;            
 output           ifctrl_lbuf_inv_req;               
+//The signal ifctrl_pcgen_chgflw_no_stall_mask is used to indicate that a change in the 
+//program counter (PC) flow should occur without causing a stall in the pipeline
+//it is not a MASK, it is a signal
 output           ifctrl_pcgen_chgflw_no_stall_mask; 
 output           ifctrl_pcgen_chgflw_vld;           
 output           ifctrl_pcgen_ins_icache_inv_done;  
 output  [38 :0]  ifctrl_pcgen_pcload_pc;            
+//The ifctrl_pcgen_reissue_pcload signal is used to control the reissuing of the PC to the PC generator
 output           ifctrl_pcgen_reissue_pcload;       
 output           ifctrl_pcgen_stall;                
 output           ifctrl_pcgen_stall_short;          
@@ -279,7 +287,7 @@ reg     [12 :0]  icache_inv_cnt;
 reg     [3  :0]  icache_inv_cur_state;              
 reg              icache_inv_fifo;                   
 reg     [3  :0]  icache_inv_next_state;             
-reg     [2  :0]  icache_inv_tag_wen;                
+reg     [2  :0]  icache_inv_tag_wen;                //active low? 1:0 select the ways to be invalidated, 2:for the fifobit enable
 reg              ifctrl_ipctrl_if_pcload;           
 reg              ifctrl_ipctrl_vld;                 
 reg              ifctrl_pcgen_reissue_pcload;       
@@ -732,6 +740,7 @@ end
 //==========================================================
 //             IF Stage PCload
 //==========================================================
+//should the pcgen load another pc(when change flow happens)?
 assign ifctrl_pcload                = l0_btb_ifctrl_chglfw_vld 
                                    && !ipctrl_ifctrl_stall
                                    && !ifctrl_pcgen_reissue_pcload
@@ -771,12 +780,12 @@ parameter IDLE        = 4'b0000;
 parameter READ_REQ    = 4'b0010;
 parameter READ_RD     = 4'b0011;
 parameter READ_ST     = 4'b0100;
-parameter INV_ALL     = 4'b0101;
+parameter INV_ALL     = 4'b0101; //request from cp0?
 parameter INS_TAG_REQ = 4'b1001;
 parameter INS_TAG_RD  = 4'b1010;
 parameter INS_CMP     = 4'b1011;
 parameter INS_INV     = 4'b1100;
-parameter INS_INV_ALL = 4'b1101;
+parameter INS_INV_ALL = 4'b1101; //request issued by Icache.IALL and Icache.IALLS?
 
 //==========================================================
 //              Gate Clk of Icache Inv SM
@@ -969,8 +978,8 @@ assign icache_inv_cnt_initial   = (icache_inv_cur_state[3:0] == IDLE) &&
 //icache_inv_cnt_on for decreasing the all_line_inv counter
 assign icache_inv_cnt_on        = (icache_inv_cur_state[3:0] == INV_ALL) || 
                                   (icache_inv_cur_state[3:0] == INS_INV_ALL);
-//icache_inv_tag_wen[2:0]
-//wen[2] for fifobit, fifobit point to the Way is going to be substitude 
+//icache_inv_tag_wen[2:0], acvite low
+//wen[2] is the enable-signal for fifobit, fifobit point to the Way is going to be substitude 
 // &CombBeg; @482
 always @( icache_inv_cur_state[3:0]
        or tag_cmp_result[1:0])
@@ -995,7 +1004,7 @@ if(icache_inv_cur_state[3:0] == INS_INV_ALL)
 else if(icache_inv_cur_state[3:0] == INV_ALL)
   icache_inv_fifo = 1'b0;
 else if(icache_inv_cur_state[3:0] == INS_INV)
-  icache_inv_fifo = tag_cmp_result[1];
+  icache_inv_fifo = tag_cmp_result[1]; //way1 is invalidated, we are going to write to way1 next time
 else
   icache_inv_fifo = 1'b0;
 // &CombEnd; @502
@@ -1086,6 +1095,8 @@ assign ins_tag_cmp[0] = (tag_data0_reg[28:0] == {1'b1, ins_inv_ptag_flop[27:0]})
 assign icache_inv_index[PC_WIDTH-2:0] = (icache_all_inv || lsu_ifu_icache_all_inv) 
                                       ? {23'b0, icache_inv_cnt[12:0], 3'b0}
                                       : icache_line_inv_index[PC_WIDTH-2:0];
+//lower 11 bits of icache_line_inv_index coresponding to the 4K page(remember, the LSB is alreay dropped)
+//addr_inv_count_reg[4:0] coresponding to all the possible alias
 assign icache_line_inv_index[PC_WIDTH-2:0] = {23'b0, addr_inv_count_reg[4:0], lsu_ifu_icache_index[5:0], 5'b0}; 
 //---------------The Index to ICache Inv ALL----------------
 //For 64K Cache, Index = 9Bit

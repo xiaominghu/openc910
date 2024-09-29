@@ -121,10 +121,12 @@ output           l1_refill_icache_if_last;
 output  [31 :0]  l1_refill_icache_if_pre_code;      
 output  [27 :0]  l1_refill_icache_if_ptag;          
 output           l1_refill_icache_if_wr;            
-output           l1_refill_ifctrl_ctc;              //cache-to-cache transfer
+output           l1_refill_ifctrl_ctc;              //cache-to-cache transfer, currectly in the CTC_INV state
 output           l1_refill_ifctrl_idle;             
 output  [38 :0]  l1_refill_ifctrl_pc;               
 output           l1_refill_ifctrl_refill_on;        
+//The signal l1_refill_ifctrl_reissue is used to indicate that the L1 cache refill process should 
+//reissue the program counter (PC) to access the instruction cache again
 output           l1_refill_ifctrl_reissue;          
 output           l1_refill_ifctrl_start;            
 output           l1_refill_ifctrl_start_for_gateclk; 
@@ -134,6 +136,8 @@ output  [127:0]  l1_refill_ifdp_inst_data;          //to IF Stage data path
 output  [31 :0]  l1_refill_ifdp_precode;            
 output           l1_refill_ifdp_refill_on;          
 output  [28 :0]  l1_refill_ifdp_tag_data;           
+//The signal l1_refill_inv_wfd_back is used to indicate whether the L1 cache refill process 
+//is waiting for data to be written back during an invalidation operation. 
 output           l1_refill_inv_wfd_back;            
 output           l1_refill_ipb_bufferable;          
 output           l1_refill_ipb_cacheable;           
@@ -514,7 +518,7 @@ begin
     physical_pc[PC_WIDTH-2:0] <= physical_pc[PC_WIDTH-2:0];
 end
 
-//l1_refill_icache_if_index
+//l1_refill_icache_if_index: last PC bit is alreay dropped
 assign l1_refill_icache_if_index[PC_WIDTH-2:0] = virtual_pc[PC_WIDTH-2:0];
 always @(posedge l1_refill_clk or negedge cpurst_b)
 begin
@@ -525,7 +529,7 @@ begin
   else if(index_inc_vld)
     virtual_pc[PC_WIDTH-2:0] <= {virtual_pc[PC_WIDTH-2:5],
                                  virtual_pc[4:3] + 2'b1,
-                                 3'b0};
+                                 3'b0};//the PC advance 16 bytes because the last bit is alreay droppped
   else
     virtual_pc[PC_WIDTH-2:0] <= virtual_pc[PC_WIDTH-2:0];
 end

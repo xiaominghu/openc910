@@ -464,6 +464,8 @@ assign pcgen_ifctrl_reissue = had_ifu_pcload ||
                               rtu_ifu_chgflw_vld;
 
 //-------------------inc_pc[PC_WIDTH-2:0]---------------------------
+//if(ifctrl_pcgen_reissue_pcload): inc_pc=if_pc
+//else: inc_pc=if_pc+8
 assign inc_pc_hi[35:0]      = {if_pc[PC_WIDTH-2:3]} + {35'b0, !ifctrl_pcgen_reissue_pcload};
 assign inc_pc[PC_WIDTH-2:0] = {
                                 inc_pc_hi[35:0], 
