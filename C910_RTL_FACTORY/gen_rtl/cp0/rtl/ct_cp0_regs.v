@@ -337,7 +337,7 @@ output           cp0_ifu_icache_read_way;
 output           cp0_ifu_icg_en;                 
 output           cp0_ifu_ind_btb_en;             
 output           cp0_ifu_ind_btb_inv;            
-output           cp0_ifu_insde;                  
+output           cp0_ifu_insde;                  //icache not snoop dcache when icache miss
 output           cp0_ifu_iwpe;                   
 output           cp0_ifu_l0btb_en;               
 output           cp0_ifu_lbuf_en;                

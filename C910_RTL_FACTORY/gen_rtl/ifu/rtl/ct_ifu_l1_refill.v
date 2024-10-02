@@ -88,10 +88,10 @@ input            cp0_ifu_icg_en;
 input            cp0_yy_clk_en;                     
 input            cpurst_b;                          
 input            forever_cpuclk;                    
-input            ifctrl_l1_refill_ins_inv;          // notify refill to invalidate a cacheline, request originally from lsu snoop
+input            ifctrl_l1_refill_ins_inv;          // notify refill that cacheline invalidation instruction(from lsu) is on-going
 input            ifctrl_l1_refill_ins_inv_dn;       // invalidation done
 input            ifctrl_l1_refill_inv_busy;         
-input            ifctrl_l1_refill_inv_on;           
+input            ifctrl_l1_refill_inv_on;           // notify refill that caline invalidation is on-going, either by instruction or cp0
 input            ifdp_l1_refill_bufferable;         
 input            ifdp_l1_refill_cacheable;          
 input            ifdp_l1_refill_fifo;               
@@ -462,6 +462,8 @@ begin
 end
 assign inv_wfd_back_clr    = refill_start && 
                              (refill_cur_state[3:0] == IDLE);
+//The signal inv_wfd_back_record is used to indicate that the L1 cache refill process 
+//should record that it is waiting for data to be written back during an invalidation operation.
 assign inv_wfd_back_record = ifctrl_l1_refill_ins_inv && 
                              (refill_cur_state[3:0] == INV_WFD1 ||
                               refill_cur_state[3:0] == WFD1);

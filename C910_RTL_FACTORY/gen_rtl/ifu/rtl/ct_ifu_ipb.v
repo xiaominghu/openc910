@@ -72,13 +72,14 @@ module ct_ifu_ipb(
   pcgen_ipb_chgflw
 );
 
+//instruction prefetch buffer module
 // &Ports; @23
 input   [127:0]  biu_ifu_rd_data;              
 input            biu_ifu_rd_data_vld;          
 input            biu_ifu_rd_grnt;              
-input            biu_ifu_rd_id;                
+input            biu_ifu_rd_id;                //0:refill, 1:prefectch
 input            biu_ifu_rd_last;              
-input   [1  :0]  biu_ifu_rd_resp;              
+input   [1  :0]  biu_ifu_rd_resp;              //bit1=1:error
 input            cp0_ifu_icache_pref_en;       
 input            cp0_ifu_icg_en;               
 input            cp0_ifu_insde;                
@@ -96,10 +97,10 @@ input            l1_refill_ipb_machine_mode;
 input   [39 :0]  l1_refill_ipb_ppc;            
 input            l1_refill_ipb_pre_cancel;     
 input            l1_refill_ipb_refill_on;      
-input            l1_refill_ipb_req;            
+input            l1_refill_ipb_req;            //refill is currently in the REQ status
 input            l1_refill_ipb_req_for_gateclk; 
 input            l1_refill_ipb_req_pre;        
-input            l1_refill_ipb_secure;         
+input            l1_refill_ipb_secure;         //The signal l1_refill_ipb_secure is used to indicate whether the L1 cache refill process is operating in a secure mode
 input            l1_refill_ipb_supv_mode;      
 input            l1_refill_ipb_tsize;          
 input   [39 :0]  l1_refill_ipb_vpc;            
@@ -286,6 +287,7 @@ parameter PC_WIDTH = 40;
 // &Force("bus","biu_ifu_rd_resp",1,0); @29
 // &Force("bus","l1_refill_ipb_vpc",39,0); @30
 
+//prefetch states
 parameter IDLE   = 4'b0000,
           CACHE  = 4'b0001,
           CMP    = 4'b0011,
@@ -296,6 +298,7 @@ parameter IDLE   = 4'b0000,
           PF3    = 4'b0100,
           INV    = 4'b1000;
 
+//write back states
 parameter PF_IDLE = 3'b000,
           PF_VLD  = 3'b001,  
           PF_GRNT = 3'b011,
@@ -350,7 +353,7 @@ end
 //==========================================================
 //State Description:
 //IDLE   : Wait for Prefetch launch 
-//CACHE  : Wait one cycle and Wait for Data from Cache
+//CACHE  : Wait one cycle and Wait for Tag Data from icache
 //CMP    : Check whether icache has already contains the prefetch line
 //PF_REQ : send the prefetch request to biu
 //PF0    : Wait for data1
@@ -429,6 +432,7 @@ end
 
 //---------------------Control Signal-----------------------
 //pref_launch_vld
+//is it ok for us to launch the prefetch?
 assign pref_launch_vld = biu_ref_grnt && //pref req only occur aftre ref grnt
                          //!pcgen_ipb_chgflw && //in case of hit under miss chgflw next icache read meet pref icache req
                          pref_idle && //pref sm not on
@@ -464,18 +468,22 @@ gated_clk_cell  x_pref_launch_clk (
 //           .local_en       (pref_launch_clk_en),//Local Condition @176
 //           .module_en      (cp0_ifu_icg_en) @177
 //         ); @178
+//currenlty we have a biu request and this request is NOT refill(so it is prefetch)
+//or the prefetch request is sent to icache(to get the tag)
 assign pref_launch_clk_en = ifu_biu_rd_req && !rid_for_grnt|| 
                             icache_if_req;
 
 //pref_launch_vld_flop for LSU req timing
+//This signal indicates that a prefetch launch is valid and has been latched.
 assign pref_launch_vld_flop = ipb_icache_if_req;
 assign pref_launch_start = pref_launch_vld_flop && 
                            cp0_ifu_icache_pref_en && //pref is on
                            !icache_inv_for_pref;
+//short-circuit condition, before the FF
 assign pref_launch_start_short = icache_if_req
                               && cp0_ifu_icache_pref_en
                               && !icache_inv_for_pref;
-
+//The signal biu_ref_grnt is used to indicate that the Bus Interface Unit (BIU) has granted a request for a cache line refill
 assign biu_ref_grnt        = biu_ifu_rd_grnt && !rid_for_grnt;
 assign pref_idle           = (req_cur_st[3:0] == IDLE) && 
                              (wb_cur_st[2:0] == PF_IDLE);
@@ -524,7 +532,8 @@ assign icache_flop_clk_en = (req_cur_st[3:0] == CACHE);
 
 // &Force("output","ifu_biu_rd_req"); @227
 //ifu_biu_rd_req
-//refill request can be set when pref not IDLE
+//refill-request can be set even when pref is not IDLE
+//indicate if ifu is currently sending the read request to biu
 assign ifu_biu_rd_req      = (ref_req_for_biu || pref_req_for_biu) && 
                              cp0_yy_clk_en;
 assign ref_req_for_biu     = l1_refill_ipb_req && 
@@ -568,7 +577,7 @@ end
 assign pf_req_for_gateclk = (req_cur_st[3:0] == CMP)    &&
                             !ipb_hit                    || 
                             (req_cur_st[3:0] == PF_REQ) && 
-                            !(l1_refill_ipb_req && !ref_hit_pref);
+                            !(l1_refill_ipb_req && !ref_hit_pref);//means (!l1_refill_ipb_req || ref_hit_pref)
 
 assign pf_req_pre = (req_cur_st[3:0] == CMP)    &&
                     !ipb_hit                    || 
@@ -664,6 +673,8 @@ assign pref_grnt_ref     = (wb_cur_st[2:0] == PF_GRNT);
 //==========================================================
 //          Record the Prefetch Information
 //==========================================================
+//The signal rid_for_grnt is used to indicate whether a request 
+//for a cache line refill has been granted by the Bus Interface Unit (BIU)
 assign rid_for_grnt = !ref_req_for_biu;
 
 //buffer nxt line addr of refill when prefetch launch

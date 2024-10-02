@@ -1091,7 +1091,13 @@ end
 assign ins_tag_cmp[1] = (tag_data1_reg[28:0] == {1'b1, ins_inv_ptag_flop[27:0]});                   
 assign ins_tag_cmp[0] = (tag_data0_reg[28:0] == {1'b1, ins_inv_ptag_flop[27:0]});                   
 
-//icache_inv_index
+//when invalidate all cache(icache_all_inv || lsu_ifu_icache_all_inv), 
+//icache_inv_cnt should be set to the total cache-line count that need to invalidate
+//however, to reuse the code for vector, for 64K icache, the icache_inv_cnt
+//is actually set as 13'b0011111111111, the 2 LSB is not used when check if
+//the invalidation process is done. which means if we don't consider about vector
+//icache_inv_cnt should be intialized as 13'b0011111111100, when concatenate with
+//3'b0, it is alway cacheline aligned(remember, the LSB is alreay dropped)
 assign icache_inv_index[PC_WIDTH-2:0] = (icache_all_inv || lsu_ifu_icache_all_inv) 
                                       ? {23'b0, icache_inv_cnt[12:0], 3'b0}
                                       : icache_line_inv_index[PC_WIDTH-2:0];
@@ -1114,6 +1120,7 @@ parameter INV_CNT_VAL = 13'b0011111111111;
 `ifdef ICACHE_32K
 parameter INV_CNT_VAL = 13'b0001111111111;
 `endif //ICACHE_64K
+//
 //csky vperl_on
 assign icache_inv_cnt_sub[12:0] = (vector_ifctrl_reset_on) ? 13'b1
                                                            : 13'b100;
@@ -1130,6 +1137,7 @@ begin
   else
     icache_inv_cnt[12:0] <= icache_inv_cnt[12:0];
 end
+//the last two bits of icache_inv_cnt is only for vector.
 assign icache_inv_over = ~(|icache_inv_cnt[12:2]) && 
                          !(vector_ifctrl_reset_on && (|icache_inv_cnt[1:0]));
 
@@ -1181,7 +1189,7 @@ assign ifctrl_icache_if_read_req_index[PC_WIDTH-2:0] = {23'b0,icache_read_index[
 //==========================================================
 //              Interface with L1 Refill
 //==========================================================
-//Keep Refill SM will not interupt INV SM
+//make sure Refill SM will not interupt INV SM
 assign ifctrl_l1_refill_inv_on       = (icache_inv_cur_state[3:0] != IDLE) ||
                                        ( 
                                          (icache_inv_cur_state[3:0] == IDLE) &&
@@ -1194,7 +1202,7 @@ assign ifctrl_l1_refill_inv_on       = (icache_inv_cur_state[3:0] != IDLE) ||
                                        );
 // &Force("output","ifctrl_l1_refill_inv_on"); @690
 assign ifctrl_l1_refill_inv_busy     = (icache_inv_cur_state[3:0] != IDLE);
-// notify l1 to invalidate a cacheline, seems the request is from lsu snoop 
+// notify refill that currently cacheline invalidation instruction is on-going 
 assign ifctrl_l1_refill_ins_inv      = lsu_ifu_icache_line_inv || 
                                        lsu_ifu_icache_all_inv;
 assign ifctrl_l1_refill_ins_inv_dn   = ifu_lsu_icache_inv_done;
