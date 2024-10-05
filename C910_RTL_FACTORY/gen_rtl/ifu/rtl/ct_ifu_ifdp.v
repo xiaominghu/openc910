@@ -268,7 +268,7 @@ input   [31 :0]  icache_if_ifdp_precode1;
 input   [28 :0]  icache_if_ifdp_tag_data0;      
 input   [28 :0]  icache_if_ifdp_tag_data1;      
 input            ifctrl_ifdp_cancel;            
-input            ifctrl_ifdp_pipedown;          
+input            ifctrl_ifdp_pipedown;          //should IF pass data to next pipeline stage?
 input            ifctrl_ifdp_stall;             
 input            ipctrl_ifdp_gateclk_en;        
 input   [7  :0]  ipctrl_ifdp_vpc_onehot_updt;   
@@ -1644,6 +1644,7 @@ end
 // &CombBeg; @915
 always @( pcgen_ifdp_pc[2:0])
 begin
+//indicate which instructions in fetch group are valid
 case(pcgen_ifdp_pc[2:0])
   3'b000  : vpc_bry_mask[7:0] = 8'b11111111;
   3'b001  : vpc_bry_mask[7:0] = 8'b01111111;

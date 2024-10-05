@@ -233,6 +233,9 @@ assign h7_ab_br = (h7_data[6:0] == 7'b1101111) || //jal
 assign h8_ab_br = (h8_data[6:0] == 7'b1101111) || //jal
                   ({h8_data[15:13],h8_data[1:0]} == 5'b10101); //c.j 
 
+//at this moment, we don't know if h1 is the start of an instruction or not.
+//so we need to calculate both h1_bry1 and h1_bry0.
+//we later choose the correct one according to the if_vpc_2_0_onehot.
 //hn_bry1 : suppose h1 is the start of one inst
 assign h1_bry1_32 = (h1_data[1:0] == 2'b11);
 assign h1_bry1    = 1'b1;
