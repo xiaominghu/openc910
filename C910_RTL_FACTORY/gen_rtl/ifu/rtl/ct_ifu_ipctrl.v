@@ -242,7 +242,7 @@ input           ifdp_ipctrl_way1_28_24_hit;
 input           ifdp_ipctrl_way1_7_0_hit;            
 input   [1 :0]  ifdp_ipctrl_way_pred;                
 input   [1 :0]  ipdp_ipctrl_bht_data;                
-input           ipdp_ipctrl_bht_result;              
+input           ipdp_ipctrl_bht_result;              //the high bit of 2bits saturation, 1:taken, 0:not taken
 input   [1 :0]  ipdp_ipctrl_btb_way0_pred;           
 input   [19:0]  ipdp_ipctrl_btb_way0_target;         
 input   [1 :0]  ipdp_ipctrl_btb_way1_pred;           
@@ -270,7 +270,7 @@ input   [7 :0]  ipdp_ipctrl_w0_ab_br;
 input   [7 :0]  ipdp_ipctrl_w0_br;                   
 input   [7 :0]  ipdp_ipctrl_w1_ab_br;                
 input   [7 :0]  ipdp_ipctrl_w1_br;                   
-input   [7 :0]  ipdp_ipctrl_way0_32;                 
+input   [7 :0]  ipdp_ipctrl_way0_32;                 //is way0 Hn potentially a 32-bit instruction? ipdp_ipctrl_way0_32[7] = h1_32_way0
 input   [7 :0]  ipdp_ipctrl_way1_32;                 
 input           l0_btb_ipctrl_st_wait;               
 input           l1_refill_ipctrl_busy;               
@@ -695,7 +695,7 @@ parameter PC_WIDTH = 40;
 //==========================================================
 //           BTB Change Flow Signal of IP Stage
 //==========================================================
-assign way0_bry0_hit = h0_vld || ifdp_ipctrl_w0_bry0_hit;
+assign way0_bry0_hit = h0_vld || ifdp_ipctrl_w0_bry0_hit;//h0_vld==1 indicates we have leftover of last consecutive cacheline
 assign way0_bry1_hit = !h0_vld && ifdp_ipctrl_w0_bry1_hit;
 assign way1_bry0_hit = h0_vld || ifdp_ipctrl_w1_bry0_hit;
 assign way1_bry1_hit = !h0_vld && ifdp_ipctrl_w1_bry1_hit;
@@ -709,7 +709,8 @@ assign bry1_hit = (icache_way0_hit)
                   : way1_bry1_hit;
 
 //branch predecode information
-assign w0b0_br_taken[7]   = ifdp_ipctrl_w0b0_br_taken[7] || ipdp_ipctrl_h0_br;
+assign w0b0_br_taken[7]   = ifdp_ipctrl_w0b0_br_taken[7] || ipdp_ipctrl_h0_br;//the first instruction of current fetch group. need to check the h0 status when assume bry0
+//make sure we dont predicte be_taken if the last 16bit of current fetch group is the first 16 bits of a 32bit instruction
 assign w0b0_br_taken[0]   = ifdp_ipctrl_w0b0_br_taken[0] && !ipdp_ipctrl_way0_32[0];
 assign w0b0_br_taken[6:1] = ifdp_ipctrl_w0b0_br_taken[6:1];
 
@@ -741,11 +742,12 @@ assign w1b1_br_ntake[7]   = ifdp_ipctrl_w1b1_br_ntake[7] ;
 assign w1b1_br_ntake[0]   = ifdp_ipctrl_w1b1_br_ntake[0] && !ipdp_ipctrl_way1_32[0];
 assign w1b1_br_ntake[6:1] = ifdp_ipctrl_w1b1_br_ntake[6:1];
 
+//if it is branch(ifdp_ipctrl_w0b0_br_taken[7]), but not absolute branch(ifdp_ipctrl_w0b0_br_ntake[7]), then it is a conditional branch
 assign w0b0_con_br[7]   = ifdp_ipctrl_w0b0_br_taken[7] ^ ifdp_ipctrl_w0b0_br_ntake[7]  || ipdp_ipctrl_h0_con_br;
 assign w0b0_con_br[0]   = (ifdp_ipctrl_w0b0_br_taken[0]^ ifdp_ipctrl_w0b0_br_ntake[0]) && !ipdp_ipctrl_way0_32[0];
 assign w0b0_con_br[6:1] = ifdp_ipctrl_w0b0_br_taken[6:1] ^ ifdp_ipctrl_w0b0_br_ntake[6:1];
 
-assign w0b1_con_br[7]   = ifdp_ipctrl_w0b1_br_taken[7] ^ ifdp_ipctrl_w0b1_br_ntake[7]  || ipdp_ipctrl_h0_con_br;
+assign w0b1_con_br[7]   = ifdp_ipctrl_w0b1_br_taken[7] ^ ifdp_ipctrl_w0b1_br_ntake[7]  || ipdp_ipctrl_h0_con_br;//why check h0 for bry1????
 assign w0b1_con_br[0]   = (ifdp_ipctrl_w0b1_br_taken[0]^ ifdp_ipctrl_w0b1_br_ntake[0]) && !ipdp_ipctrl_way0_32[0];
 assign w0b1_con_br[6:1] = ifdp_ipctrl_w0b1_br_taken[6:1] ^ ifdp_ipctrl_w0b1_br_ntake[6:1];
 
@@ -798,6 +800,13 @@ assign branch_ntake  = (icache_way0_hit)
 
 assign bht_result    = ipdp_ipctrl_bht_result;
 
+//1.if BHT predicts taken, then we will additionally check if there is 
+//any branch(indicated by branch_taken signal) in the fetch group,
+//if there is not branch at all, then we will not set the change-flow signal even BHT say yes;
+//2.if BHT predicts ntake, then we will additionally check if there is 
+//any absolute branch(indicated by branch_ntake signal) in the fetch group,
+//we will set the change-flow signal if there is any absolute branch, evev BHT say no.
+//basically, we assume the predecode info is much accurate than the BHT, so we will trust the predecode info more.
 assign branch_chgflw = (bht_result)
                        ? branch_taken
                        : branch_ntake;
@@ -829,6 +838,7 @@ assign ip_chgflw_ntake[7:0] =  (icache_way0_hit_short)
 assign ip_con_br[7:0]       =  (icache_way0_hit_short)
                                ? way0_con_br[7:0]
                                : way1_con_br[7:0];
+//refer to the comments of branch_chgflw
 assign ipctrl_ipdp_branch[7:0] = (bht_result)
                                  ? ip_chgflw_taken[7:0]
                                  : ip_chgflw_ntake[7:0];                                 
@@ -941,7 +951,7 @@ end
 
 
 //ipctrl chgflw valid when:
-//1. ip chgflw dectect && if doesn't hit ip chgflw pc
+//1. ip chgflw dectected && if doesn't hit ip chgflw pc
 //2. if chgflw mistaken
 assign ipctrl_branch_taken    = ip_pcload && !ip_chgflw_mask;
 assign ipctrl_branch_mistaken = ip_chgflw_mistaken;
@@ -1521,6 +1531,10 @@ assign way1_bry_hit_missigned = 1'b1;
 assign missigned_bry_update_vld = ip_data_vld && 
                                  (!h0_vld && !bry0_hit&& !bry1_hit);
 
+//H0 is the leftover of last cacheline, which means H7 of last consecutive cacheline is 
+//the first 2 bytes of a 32bit instruction. the H1 of current cacheline
+//is the last 2 bytes of this 32bit instruction.
+//It also means H1 of current cacheline is not a boundry, thus we will select Bry0.
 //When  H0_vld, Select Bry0, 
 //Thus (Hn_Bry[7] | H0_vld) will not affect Bry Select Result
 //When !H0_vld, Selcet Bry1 when Target Half Bry1 is 1

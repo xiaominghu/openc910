@@ -402,7 +402,7 @@ endcase
 // &CombEnd; @161
 end
 
-assign sfp_vl_pred_en   = ~cp0_ifu_vsetvli_pred_disable && ~cp0_ifu_vsetvli_pred_mode;
+assign sfp_vl_pred_en   = ~cp0_ifu_vsetvli_pred_disable && ~cp0_ifu_vsetvli_pred_mode;//Vector Extension
 
 //spec fail predictor hit
 assign sfp_sf_hit       = (|sfp_sf_pc_hit[11:0]) && ~sfp_vl_hit_raw;

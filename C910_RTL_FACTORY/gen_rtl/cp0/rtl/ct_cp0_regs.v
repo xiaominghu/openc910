@@ -4113,7 +4113,7 @@ assign cp0_ifu_insde          = insde;
 assign cp0_ifu_iwpe           = iwpe;
 assign cp0_ifu_lbuf_en        = lpe;
 assign cp0_ifu_ras_en         = rse;
-assign cp0_ifu_nsfe           = nsfe;
+assign cp0_ifu_nsfe           = nsfe;//1:speculative fail prediction enable
 
 // IFU Cache modules invalid
 assign cp0_ifu_bht_inv        = bht_inv;

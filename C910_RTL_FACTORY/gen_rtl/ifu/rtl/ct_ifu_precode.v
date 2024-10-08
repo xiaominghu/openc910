@@ -118,6 +118,7 @@ wire    [31 :0]  pre_code;
 //pre_code[ 5: 3] -- {h7_br, h7_bry1, h7_bry0} -- inst_data[ 31: 16]
 //pre_code[ 2: 0] -- {h8_br, h8_bry1, h8_bry0} -- inst_data[ 15:  0]
 
+//H1 is the fistr instruction in the 8 instructions
 assign h1_data[15:0] = inst_data[127:112];
 assign h2_data[15:0] = inst_data[111: 96];
 assign h3_data[15:0] = inst_data[ 95: 80];

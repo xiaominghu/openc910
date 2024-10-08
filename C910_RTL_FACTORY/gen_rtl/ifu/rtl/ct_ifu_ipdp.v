@@ -697,8 +697,8 @@ output  [7 :0]  ipdp_ipctrl_w0_ab_br;
 output  [7 :0]  ipdp_ipctrl_w0_br;                 
 output  [7 :0]  ipdp_ipctrl_w1_ab_br;              
 output  [7 :0]  ipdp_ipctrl_w1_br;                 
-output  [7 :0]  ipdp_ipctrl_way0_32;               
-output  [7 :0]  ipdp_ipctrl_way1_32;               
+output  [7 :0]  ipdp_ipctrl_way0_32;               //is way0 Hn potentially a 32-bit instruction? ipdp_ipctrl_way0_32[7] = h1_32_way0
+output  [7 :0]  ipdp_ipctrl_way1_32;               //is way1 Hn potentially a 32-bit instruction?
 output  [38:0]  ipdp_l0_btb_ras_pc;                
 output          ipdp_l0_btb_ras_push;              
 output  [7 :0]  ipdp_lbuf_vl_reg;                  
@@ -1999,6 +1999,7 @@ assign ipdp_bht_h0_con_br            = h0_vld_pre &&
                                        ipctrl_ipdp_bht_vld;
  
 //icache way0
+//the higher 14bits of Hn
 assign h1_high_way0[13:0]  = ifdp_ipdp_h1_inst_high_way0[13:0]; 
 assign h2_high_way0[13:0]  = ifdp_ipdp_h2_inst_high_way0[13:0]; 
 assign h3_high_way0[13:0]  = ifdp_ipdp_h3_inst_high_way0[13:0]; 
@@ -2008,6 +2009,7 @@ assign h6_high_way0[13:0]  = ifdp_ipdp_h6_inst_high_way0[13:0];
 assign h7_high_way0[13:0]  = ifdp_ipdp_h7_inst_high_way0[13:0]; 
 assign h8_high_way0[13:0]  = ifdp_ipdp_h8_inst_high_way0[13:0]; 
 
+//the lower 2bits of Hn
 assign h1_low_way0[1:0]    = ifdp_ipdp_h1_inst_low_way0[1:0];
 assign h2_low_way0[1:0]    = ifdp_ipdp_h2_inst_low_way0[1:0];
 assign h3_low_way0[1:0]    = ifdp_ipdp_h3_inst_low_way0[1:0];
@@ -2404,6 +2406,7 @@ assign h5_32_way0   = (h5_low_way0[1:0] == 2'b11);
 assign h6_32_way0   = (h6_low_way0[1:0] == 2'b11);
 assign h7_32_way0   = (h7_low_way0[1:0] == 2'b11);
 assign h8_32_way0   = (h8_low_way0[1:0] == 2'b11);
+//is Hn a 32bit instrcution? way0_32[7] = h1_32_way0
 assign way0_32[7:0] = {h1_32_way0,
                        h2_32_way0,
                        h3_32_way0,
@@ -2506,7 +2509,7 @@ assign vsetvli[7:0]    = vsetvli_pre[7:0] & bry_data[7:0];
 assign vl_pred[7:0]    = vl_pred_pre[7:0] & bry_data[7:0];
 assign bkpta[7:0]      = ifdp_ipdp_bkpta[7:0];
 assign bkptb[7:0]      = ifdp_ipdp_bkptb[7:0];
-assign inst_32[7]      = (h0_vld) ? 1'b0 : inst_32_pre[7];
+assign inst_32[7]      = (h0_vld) ? 1'b0 : inst_32_pre[7];//H1
 assign inst_32[0]      = (inst_32_pre[0]);
 assign inst_32[6:1]    = inst_32_pre[6:1];
 assign inst_ldst[7:0]  = inst_ld[7:0] | inst_st[7:0];  
@@ -2654,6 +2657,7 @@ assign inst_st_pre[7:0] = (way0_hit) ? way0_inst_st_pre[7:0] : way1_inst_st_pre[
 assign dst_vld_pre[7:0] = (way0_hit) ? way0_dst_vld_pre[7:0] : way1_dst_vld_pre[7:0];
 assign vsetvli_pre[7:0] = (way0_hit) ? way0_vsetvli_pre[7:0] : way1_vsetvli_pre[7:0];
 assign vl_pred_pre[7:0] =(way0_hit) ? way0_vl_pred_pre[7:0]: way1_vl_pred_pre[7:0];
+//is Hn potentially a 32-bit instruction? inst_32_pre[7] = h1_32
 assign inst_32_pre[7:0] = (way0_hit) ? way0_32[7:0]          : way1_32[7:0];
 
 //h0 data
@@ -3686,7 +3690,7 @@ endcase
 end
 
 
-//Hn will not be valid when Hn is the last Half word && Hn is strat of 32 inst
+//Hn will not be valid when Hn is the last Half word && Hn is the start of 32bit inst
 assign h1_vld_after_head        = !(vpc_onehot[0] && inst_32[0] && bry_data[0]);
 
 // &CombBeg; @1310

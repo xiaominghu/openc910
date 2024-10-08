@@ -437,7 +437,7 @@ output  [1  :0]  ifdp_ipdp_l0_btb_way_pred;
 output           ifdp_ipdp_mmu_pgflt;           
 output  [2  :0]  ifdp_ipdp_sfp_hit_pc_lo;       
 output  [3  :0]  ifdp_ipdp_sfp_hit_type;        
-output           ifdp_ipdp_sfp_pc_hit;          
+output           ifdp_ipdp_sfp_pc_hit;          //used to indicate whether the speculative fail prediction (SFP) mechanism has correctly predicted the program counter (PC) hit
 output  [38 :0]  ifdp_ipdp_vpc;                 
 output           ifdp_l1_refill_bufferable;     
 output           ifdp_l1_refill_cacheable;      
@@ -1546,12 +1546,16 @@ assign w1b0_bry_data[7:0] =  w1b0_bry[7:0] & vpc_bry_mask[7:0];
 assign w1b1_bry_data[7:0] =  w1b1_bry[7:0] & vpc_bry_mask[7:0];
 
 //bry hit signal
+//if_vpc_2_0_onehot indicates the next PC that we go.
+//so for sure, the location of the next PC is a boundry.
+//here we find out which assumption is correctly hit the vpc boundry.
 assign w0_bry1_hit = |(w0b1_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 assign w1_bry1_hit = |(w1b1_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 assign w0_bry0_hit = |(w0b0_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 assign w1_bry0_hit = |(w1b0_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 
 //bry masked predecode information
+//seems br instruction is predicted as taken, and ab_br is predicted as not taken
 assign w0b0_br_taken[7:0] = w0_br[7:0] & vpc_bry_mask[7:0] & w0b0_bry[7:0];
 assign w0b1_br_taken[7:0] = w0_br[7:0] & vpc_bry_mask[7:0] & w0b1_bry[7:0];
 assign w1b0_br_taken[7:0] = w1_br[7:0] & vpc_bry_mask[7:0] & w1b0_bry[7:0];
