@@ -122,7 +122,7 @@ reg             l0_btb_update_cnt_bit;
 reg     [36:0]  l0_btb_update_data;           
 reg             l0_btb_update_ras_bit;        
 reg             l0_btb_update_vld_bit;        
-reg     [3 :0]  l0_btb_wen;                   
+reg     [3 :0]  l0_btb_wen;                   //each l0 btb entry has 4 fields(details refer to ct_ifu_l0_btb_entry.v), this write-enable signal indicate which filed will be updated
 reg     [38:0]  ras_pc;                       
 
 // &Wires; @25
@@ -436,7 +436,7 @@ assign entry_hit_counter       = entry_hit_flop[0]  & entry0_cnt
                                | entry_hit_flop[14] & entry14_cnt
                                | entry_hit_flop[15] & entry15_cnt;
 
-//Indicate whether entry record is ras
+//Indicate whether entry record is ras(this entry is an return instruction)
 assign entry_hit_ras           = entry_hit_flop[0]  & entry0_ras
                                | entry_hit_flop[1]  & entry1_ras
                                | entry_hit_flop[2]  & entry2_ras

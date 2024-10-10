@@ -232,7 +232,7 @@ module ct_ifu_ifdp(
 );
 
 // &Ports; @23
-input   [1  :0]  btb_ifdp_way0_pred;            
+input   [1  :0]  btb_ifdp_way0_pred;            //the way-prediction of btb way0
 input   [9  :0]  btb_ifdp_way0_tag;             
 input   [19 :0]  btb_ifdp_way0_target;          
 input            btb_ifdp_way0_vld;             
@@ -293,7 +293,7 @@ input   [1  :0]  l0_btb_ifdp_chgflw_way_pred;
 input            l0_btb_ifdp_counter;           
 input   [15 :0]  l0_btb_ifdp_entry_hit;         
 input            l0_btb_ifdp_hit;               
-input            l0_btb_ifdp_ras;               
+input            l0_btb_ifdp_ras;               //indicate the l0 btb entry is an return instruction
 input            l1_refill_ifdp_acc_err;        
 input   [127:0]  l1_refill_ifdp_inst_data;      
 input   [31 :0]  l1_refill_ifdp_precode;        
@@ -355,7 +355,7 @@ output  [1  :0]  ifdp_ipctrl_way_pred;
 output           ifdp_ipdp_acc_err;             
 output  [7  :0]  ifdp_ipdp_bkpta;               
 output  [7  :0]  ifdp_ipdp_bkptb;               
-output  [1  :0]  ifdp_ipdp_btb_way0_pred;       
+output  [1  :0]  ifdp_ipdp_btb_way0_pred;       //the way-prediction of btb way0
 output  [9  :0]  ifdp_ipdp_btb_way0_tag;        
 output  [19 :0]  ifdp_ipdp_btb_way0_target;     
 output           ifdp_ipdp_btb_way0_vld;        
@@ -422,8 +422,8 @@ output  [3  :0]  ifdp_ipdp_h8_precode_way1;
 output           ifdp_ipdp_l0_btb_counter;      
 output  [15 :0]  ifdp_ipdp_l0_btb_entry_hit;    
 output           ifdp_ipdp_l0_btb_hit;          
-output  [38 :0]  ifdp_ipdp_l0_btb_mispred_pc;   
-output           ifdp_ipdp_l0_btb_ras;          
+output  [38 :0]  ifdp_ipdp_l0_btb_mispred_pc;   //PC if branch not taken, that is the PC after the branch inst.
+output           ifdp_ipdp_l0_btb_ras;          //indicate the l0 btb entry is an return instruction
 output  [38 :0]  ifdp_ipdp_l0_btb_target;       
 output           ifdp_ipdp_l0_btb_way0_high_hit; 
 output           ifdp_ipdp_l0_btb_way0_low_hit; 
@@ -1555,7 +1555,12 @@ assign w0_bry0_hit = |(w0b0_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 assign w1_bry0_hit = |(w1b0_bry[7:0] & if_vpc_2_0_onehot[7:0]);
 
 //bry masked predecode information
-//seems br instruction is predicted as taken, and ab_br is predicted as not taken
+//br_taken means: the branch info of currect fetch group(16 bytes) when BHT predicts the branch is taken
+//we will calculate the final prediction based on this vector when branch is predicted as taken by BHT
+//it contains the locations of absolute branch and conditional branch
+//br_ntake means: the absolute branch(jal) info of currect fetch group(16 bytes) when BHT predicts the branch is NOT taken
+//we will calculat the final prediction based on this vector when branch is predicted as NOT taken by BHT
+//it contains the locations of absolute branch
 assign w0b0_br_taken[7:0] = w0_br[7:0] & vpc_bry_mask[7:0] & w0b0_bry[7:0];
 assign w0b1_br_taken[7:0] = w0_br[7:0] & vpc_bry_mask[7:0] & w0b1_bry[7:0];
 assign w1b0_br_taken[7:0] = w1_br[7:0] & vpc_bry_mask[7:0] & w1b0_bry[7:0];
@@ -1817,6 +1822,9 @@ assign btb_way2_high_hit    = btb_ifdp_way2_target[19:10] == l0_btb_ifdp_chgflw_
 assign btb_way2_low_hit     = btb_ifdp_way2_target[9:0]   == l0_btb_ifdp_chgflw_pc[9:0];
 assign btb_way3_high_hit    = btb_ifdp_way3_target[19:10] == l0_btb_ifdp_chgflw_pc[19:10];
 assign btb_way3_low_hit     = btb_ifdp_way3_target[9:0]   == l0_btb_ifdp_chgflw_pc[9:0];
+//confusing name, seems it is the next PC after the branch inst.
+//that is the PC we are going to if branch not taken
+//so a better name would be btb_pc_when_ntaken
 assign btb_mispred_pc[PC_WIDTH-2:0] = pcgen_ifdp_inc_pc[PC_WIDTH-2:0];
 
 always @(posedge ifdp_clk or negedge cpurst_b)

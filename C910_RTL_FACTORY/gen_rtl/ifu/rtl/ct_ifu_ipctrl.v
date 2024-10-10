@@ -262,7 +262,7 @@ input   [7 :0]  ipdp_ipctrl_inst_32;
 input           ipdp_ipctrl_ip_expt_vld;             
 input   [3 :0]  ipdp_ipctrl_l0_btb_hit_way;          
 input   [38:0]  ipdp_ipctrl_l0_btb_mispred_pc;       
-input           ipdp_ipctrl_l0_btb_ras;              
+input           ipdp_ipctrl_l0_btb_ras;              //indicate the l0 btb entry is an return instruction
 input           ipdp_ipctrl_l0_btb_vld;              
 input           ipdp_ipctrl_no_br;                   
 input   [38:0]  ipdp_ipctrl_vpc;                     
@@ -272,7 +272,7 @@ input   [7 :0]  ipdp_ipctrl_w1_ab_br;
 input   [7 :0]  ipdp_ipctrl_w1_br;                   
 input   [7 :0]  ipdp_ipctrl_way0_32;                 //is way0 Hn potentially a 32-bit instruction? ipdp_ipctrl_way0_32[7] = h1_32_way0
 input   [7 :0]  ipdp_ipctrl_way1_32;                 
-input           l0_btb_ipctrl_st_wait;               
+input           l0_btb_ipctrl_st_wait;               //the state of l0 btb entry is WAIT
 input           l1_refill_ipctrl_busy;               
 input           pcgen_ipctrl_cancel;                 
 input           pcgen_ipctrl_pipe_cancel;            
@@ -710,7 +710,7 @@ assign bry1_hit = (icache_way0_hit)
 
 //branch predecode information
 assign w0b0_br_taken[7]   = ifdp_ipctrl_w0b0_br_taken[7] || ipdp_ipctrl_h0_br;//the first instruction of current fetch group. need to check the h0 status when assume bry0
-//make sure we dont predicte be_taken if the last 16bit of current fetch group is the first 16 bits of a 32bit instruction
+//filter out the case: the last 16bit of current fetch group is the first 16 bits of a 32bit instruction
 assign w0b0_br_taken[0]   = ifdp_ipctrl_w0b0_br_taken[0] && !ipdp_ipctrl_way0_32[0];
 assign w0b0_br_taken[6:1] = ifdp_ipctrl_w0b0_br_taken[6:1];
 
@@ -915,9 +915,15 @@ assign l0_btb_hit_l1_btb = (bht_result)
                               : l0_btb_hit_ntake_way1;
 assign ip_if_pcload          = ifctrl_ipctrl_if_pcload;
 
-//chgflw taken
+//chgflw taken section:
+
+//confusing name, actually, this signal indicate if current fetch group valid
+//seems because it is used with branch_chgflw, so the name imply that
+//"should we chgflw is branch_chgflw is true?"
 assign ip_chgflw_pre         = ip_data_vld
                             && (h0_vld || bry0_hit || bry1_hit); 
+//does chgflw-status valid in the IP stage?
+//both IF make the correct chgflw decision and IP does not make the incorrect chgflw decision.
 assign ip_chgflw_mask        = ip_if_pcload 
                             && !ipdp_ipctrl_l0_btb_ras 
                             && l0_btb_hit_l1_btb
@@ -925,12 +931,13 @@ assign ip_chgflw_mask        = ip_if_pcload
 assign ip_pcload             = ip_chgflw_pre
                             && branch_chgflw;
                             
-//mistaken :
+//mistaken section:
 assign ip_chgflw_mistaken_pre = ip_if_pcload
                              && !ipdp_ipctrl_l0_btb_ras
                              && !con_br_more_than_one
                              && (h0_vld || bry0_hit || bry1_hit)
                              && ip_data_vld;
+//does IF make the incorrect chgflow decision?
 assign ip_chgflw_mistaken = ip_chgflw_mistaken_pre
                          && !branch_chgflw;
 
@@ -980,7 +987,7 @@ else if(|way0_br_taken[3:2])
 else if(|way0_br_taken[1:0])
   way0_chgflw_pc_taken[19:0] = ipdp_ipctrl_btb_way3_target[19:0];
 else
-  way0_chgflw_pc_taken[19:0] = ipdp_ipctrl_l0_btb_mispred_pc[19:0];
+  way0_chgflw_pc_taken[19:0] = ipdp_ipctrl_l0_btb_mispred_pc[19:0];//PC if branch not taken, that is the PC after the branch inst.
 // &CombEnd; @289
 end
 

@@ -53,7 +53,7 @@ input   [3 :0]  entry_wen;
 input           forever_cpuclk;    
 input           pad_yy_icg_scan_en; 
 output          entry_cnt;         
-output          entry_ras;         
+output          entry_ras;         //indicate this entry is an return instruction
 output  [14:0]  entry_tag;         
 output  [19:0]  entry_target;      
 output          entry_vld;         

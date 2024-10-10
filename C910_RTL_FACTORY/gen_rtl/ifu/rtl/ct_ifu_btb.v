@@ -88,7 +88,7 @@ input           pcgen_btb_stall;
 input           pcgen_btb_stall_short;               
 output          btb_ifctrl_inv_done;                 
 output          btb_ifctrl_inv_on;                   
-output  [1 :0]  btb_ifdp_way0_pred;                  
+output  [1 :0]  btb_ifdp_way0_pred;                  //the way-prediction of btb way0
 output  [9 :0]  btb_ifdp_way0_tag;                   
 output  [19:0]  btb_ifdp_way0_target;                
 output          btb_ifdp_way0_vld;                   

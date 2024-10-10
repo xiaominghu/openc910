@@ -688,8 +688,8 @@ output          ipdp_ipctrl_h8_br;
 output  [7 :0]  ipdp_ipctrl_inst_32;               
 output          ipdp_ipctrl_ip_expt_vld;           
 output  [3 :0]  ipdp_ipctrl_l0_btb_hit_way;        
-output  [38:0]  ipdp_ipctrl_l0_btb_mispred_pc;     
-output          ipdp_ipctrl_l0_btb_ras;            
+output  [38:0]  ipdp_ipctrl_l0_btb_mispred_pc;     //PC if branch not taken, that is the PC after the branch inst.
+output          ipdp_ipctrl_l0_btb_ras;            //indicate the l0 btb entry is an return instruction
 output          ipdp_ipctrl_l0_btb_vld;            
 output          ipdp_ipctrl_no_br;                 
 output  [38:0]  ipdp_ipctrl_vpc;                   
@@ -5786,7 +5786,7 @@ assign ipdp_ipctrl_h8_br       = h0_vld_pre && (h0_con_br_pre|| h0_ab_br_pre);
 assign l0_btb_way0_hit     = ifdp_ipdp_btb_way0_vld 
                           && ifdp_ipdp_l0_btb_way0_high_hit 
                           && ifdp_ipdp_l0_btb_way0_low_hit
-                          && (ifdp_ipdp_l0_btb_way_pred[1:0] == ifdp_ipdp_btb_way0_pred[1:0]);
+                          && (ifdp_ipdp_l0_btb_way_pred[1:0] == ifdp_ipdp_btb_way0_pred[1:0]);//check if way-prediction matchs
 assign l0_btb_way1_hit     = ifdp_ipdp_btb_way1_vld
                           && ifdp_ipdp_l0_btb_way1_high_hit 
                           && ifdp_ipdp_l0_btb_way1_low_hit
@@ -5802,6 +5802,7 @@ assign l0_btb_way3_hit     = ifdp_ipdp_btb_way3_vld
 assign l0_btb_hit_l1_btb   = ipctrl_ipdp_l0_btb_hit;
 
 //assign ipdp_ipctrl_l0_btb_hit              = l0_btb_hit_l1_btb;
+//indicates which BTB way is hited by l0 btb
 assign ipdp_ipctrl_l0_btb_hit_way[3:0]             = {l0_btb_way3_hit,l0_btb_way2_hit,
                                                       l0_btb_way1_hit,l0_btb_way0_hit};
 assign ipdp_ipctrl_l0_btb_vld                      = ifdp_ipdp_l0_btb_hit;

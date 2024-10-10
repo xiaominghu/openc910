@@ -239,7 +239,7 @@ output           ifctrl_ifdp_pipedown;              // indicate ifdp shold pass 
 output           ifctrl_ifdp_stall;                 
 output           ifctrl_ind_btb_inv;                
 output           ifctrl_ipb_inv_on;                 
-output           ifctrl_ipctrl_if_pcload;           
+output           ifctrl_ipctrl_if_pcload;           //should the pcgen load another pc
 output           ifctrl_ipctrl_vld;                 
 output           ifctrl_l0_btb_inv;                 
 output           ifctrl_l0_btb_stall;               
