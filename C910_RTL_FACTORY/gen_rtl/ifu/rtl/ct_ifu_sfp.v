@@ -56,7 +56,7 @@ module ct_ifu_sfp(
 
 // &Ports; @23
 input           cp0_ifu_icg_en;                      
-input           cp0_ifu_nsfe;                        
+input           cp0_ifu_nsfe;                        //1:sfp is enabled
 input           cp0_ifu_vsetvli_pred_disable;        
 input           cp0_ifu_vsetvli_pred_mode;           
 input           cp0_yy_clk_en;                       
@@ -412,7 +412,7 @@ assign sfp_vl_hit       = (|sfp_vl_pc_hit[11:0])     && sfp_vl_pred_en;
 
 assign sfp_pc_hit       = sfp_vl_hit_raw 
                        || sfp_sf_hit && cp0_ifu_nsfe
-                       || (sfp_rd_cur_state[1:0] == SF_RD ) && sfp_sf_hit  && cp0_ifu_nsfe
+                       || (sfp_rd_cur_state[1:0] == SF_RD ) && sfp_sf_hit  && cp0_ifu_nsfe//seems this condition is not necessary
                        || (sfp_rd_cur_state[1:0] == BAR_RD) && sfp_bar_hit && cp0_ifu_nsfe;
 
 always@(posedge forever_cpuclk or negedge cpurst_b)

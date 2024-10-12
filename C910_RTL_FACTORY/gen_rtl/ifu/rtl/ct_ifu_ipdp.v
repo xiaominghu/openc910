@@ -2657,7 +2657,7 @@ assign inst_st_pre[7:0] = (way0_hit) ? way0_inst_st_pre[7:0] : way1_inst_st_pre[
 assign dst_vld_pre[7:0] = (way0_hit) ? way0_dst_vld_pre[7:0] : way1_dst_vld_pre[7:0];
 assign vsetvli_pre[7:0] = (way0_hit) ? way0_vsetvli_pre[7:0] : way1_vsetvli_pre[7:0];
 assign vl_pred_pre[7:0] =(way0_hit) ? way0_vl_pred_pre[7:0]: way1_vl_pred_pre[7:0];
-//is Hn potentially a 32-bit instruction? inst_32_pre[7] = h1_32
+//is Hn potentially a 32-bit instruction? inst_32_pre[7] indicates H1
 assign inst_32_pre[7:0] = (way0_hit) ? way0_32[7:0]          : way1_32[7:0];
 
 //h0 data
@@ -4203,6 +4203,7 @@ assign sfp_bar_pc_hit[7:0]    = {8{bar_hit}}    & sfp_pc_hit_onehot[7:0];
 assign sfp_vl_pc_hit[7:0]     = {8{vl_hit}}     & sfp_pc_hit_onehot[7:0];
 assign sfp_vl_pc_raw_hit[7:0] = {8{vl_hit_raw}} & sfp_pc_hit_onehot[7:0];
 
+// No-speculative execution signal??
 assign inst_no_spec[7:0]   = sfp_sf_pc_hit[7:0]  & inst_st[7:0]
                            | sfp_bar_pc_hit[7:0] & inst_ld[7:0];
 
@@ -5330,10 +5331,10 @@ endcase
 end
 
 //==========================================================
-//              Half Word Number Generate
+//              Half Word Count Generate
 //==========================================================
-//half_num_before_con_br[3:0]
-//The number of half word before con_br
+//half_num_before_con_br[3:0], bad name, should be halfword_cnt_before_con_br
+//The count of half word before con_br
 // &CombBeg; @2623
 always @( con_br_after_head[7:0]
        or h0_vld)
@@ -5568,6 +5569,7 @@ assign l0_btb_ras_pc_hit             = (ras_target_pc[PC_WIDTH-2:0] == ifdp_ipdp
 //ras push pc can be calculated at ip stage
 assign pcall_vpc_mask[7:0]           = pcall[7:0] & ipctrl_ipdp_vpc_mask[7:0];
 assign inst_32_vpc_mask[7:0]         = inst_32[7:0] & ipctrl_ipdp_vpc_mask[7:0];
+//the PC after H1 if H1 is a branch instruction
 assign ipdp_h1_next_pc[PC_WIDTH-2:0] = (h0_vld)
                                        ? {ip_vpc[PC_WIDTH-2:3],3'b001}
                                        : (inst_32_vpc_mask[7])
@@ -5665,8 +5667,8 @@ begin
 end
 
 assign h0_update_vld    = ipctrl_ipdp_h0_update_vld;                        
-assign h0_vld_pre       = (inst_32[0] && bry_data[0]) &&
-                          !(|chgflw[7:1])             && 
+assign h0_vld_pre       = (inst_32[0] && bry_data[0]) && //last half word is the first 16bits of an 32bit instruction
+                          !(|chgflw[7:1])             && //there is an branch before the last hafl word
                           !ipctrl_ipdp_ip_pcload      && 
                           !ipctrl_ipdp_br_more_than_one_stall;
 assign ipdp_ipctrl_h0_vld = h0_vld_dup;
@@ -5774,9 +5776,10 @@ assign ip_expt = ip_acc_err ||
                  ip_mmu_acc_deny || 
                  ip_mmu_pgflt; 
 assign ipdp_ipctrl_ip_expt_vld = ip_mmu_acc_deny;
-assign ipdp_ipctrl_h0_br       = h0_vld && h0_br;
+assign ipdp_ipctrl_h0_br       = h0_vld && h0_br;//the H8 status of previous fetch group is the H0 status of current fetch group
 assign ipdp_ipctrl_h0_ab_br    = h0_vld && h0_ab_br;
 assign ipdp_ipctrl_h0_con_br   = h0_vld && h0_con_br;
+//from the assignment, we can see that h0_vld_pre indicates the H8 of "current" fetch group.
 assign ipdp_ipctrl_h8_br       = h0_vld_pre && (h0_con_br_pre|| h0_ab_br_pre); 
 
 //==========================================================
@@ -5836,7 +5839,7 @@ assign ipdp_ipctrl_btb_way3_pred[1:0]    = (ifdp_ipdp_btb_way3_vld)
                                           : 2'b11;
 
 
-//if h0_vld, h1 must be inst_16
+//if h0_vld, h1 should NOT be the start of a 32bit instruction
 assign ipdp_ipctrl_inst_32[7:0] = inst_32_pre[7:0] & {(~h0_vld), 7'b1111111};
 
 //==========================================================
@@ -5848,7 +5851,7 @@ assign ipdp_btb_target_pc[19:0]         = btb_branch_target[19:0];
 //==========================================================
 //                Interface with L0 BTB
 //==========================================================
-//up date L0 btb entry
+//update L0 btb entry
 //1. bht predict as weak taken,it may cause next branch not taken
 //2. l0 btb hit,but counter is zero,we should count up to 1
 //3. if chgflw valid,but ip doesn't chgflw

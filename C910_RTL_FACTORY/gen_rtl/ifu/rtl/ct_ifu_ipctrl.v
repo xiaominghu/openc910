@@ -1168,7 +1168,7 @@ assign way_pred[1:0] = (bht_result)
 //==========================================================
 assign bht_data[1:0] = ipdp_ipctrl_bht_data[1:0];
 assign l0_btb_hit  = ip_pcload && ip_chgflw_mask;                       
-assign l0_btb_miss = (!ipdp_ipctrl_l0_btb_vld || ipdp_ipctrl_l0_btb_ras && ipdp_ipctrl_l0_btb_vld)
+assign l0_btb_miss = (!ipdp_ipctrl_l0_btb_vld || ipdp_ipctrl_l0_btb_ras && ipdp_ipctrl_l0_btb_vld)//why include btb_ras???
                   && ( 
                       branch_taken && (bht_data[1:0] == 2'b11) ||
                       branch_ntake
@@ -1406,7 +1406,7 @@ assign icache_chk_err_refill_ff = 1'b0;
 assign ip_refill_pre = ifctrl_ipctrl_vld && 
                        !ifdp_ipctrl_expt_vld &&
                        (
-                         (
+                         (//The IP stage is not currently in a refill state (!ifdp_ipctrl_refill_on) and there is no valid cache hit
                            !ifdp_ipctrl_refill_on && 
                            !(
                               ifdp_ipctrl_tsize && 
@@ -1415,7 +1415,7 @@ assign ip_refill_pre = ifctrl_ipctrl_vld &&
                          ) || 
                          (
                            ifdp_ipctrl_refill_on && 
-                           !icache_way0_hit
+                           !icache_way0_hit//why only check way0???
                          )
                        );
 
