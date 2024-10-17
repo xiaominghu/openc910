@@ -5607,6 +5607,7 @@ always @( ipdp_h4_next_pc[38:0]
        or ipdp_h8_next_pc[38:0]
        or pcall_vpc_mask[7:0])
 begin
+//calculate return address at ip stage
 casez(pcall_vpc_mask[7:0])
   8'b1??????? : ipdp_ras_push_pc[PC_WIDTH-2:0] = ipdp_h1_next_pc[PC_WIDTH-2:0];
   8'b01?????? : ipdp_ras_push_pc[PC_WIDTH-2:0] = ipdp_h2_next_pc[PC_WIDTH-2:0];

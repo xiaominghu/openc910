@@ -400,10 +400,10 @@ gated_clk_cell  x_l0_btb_pipe_clk (
 assign l0_btb_pipe_en  = cp0_ifu_btb_en && cp0_ifu_l0btb_en;
 
 assign l0_btb_ras_pc[PC_WIDTH-2:0] = (ras_l0_btb_ras_push)
-                                     ? ras_l0_btb_push_pc[PC_WIDTH-2:0]
+                                     ? ras_l0_btb_push_pc[PC_WIDTH-2:0]//call from ib stage
                                      : (ipdp_l0_btb_ras_push)
-                                       ? ipdp_l0_btb_ras_pc[PC_WIDTH-2:0]
-                                       : ras_l0_btb_pc[PC_WIDTH-2:0];
+                                       ? ipdp_l0_btb_ras_pc[PC_WIDTH-2:0]//call from ip stage
+                                       : ras_l0_btb_pc[PC_WIDTH-2:0];//call after ib stage
 
 always@(posedge l0_btb_pipe_clk or negedge cpurst_b)
 begin
